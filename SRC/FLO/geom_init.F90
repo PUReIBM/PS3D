@@ -77,7 +77,7 @@ CONTAINS
 		dtheta=twopi/imax/four
 
 		theta = zero
-		phi   = zsero
+		phi   = zero
 		nbndloc = 0
 		nrprloc = 0
 		DO i=1,imax+1
