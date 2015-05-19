@@ -1,0 +1,27 @@
+# Nom du compilateur, nom de l'editeur de liens
+
+#CC   = pgf90
+#LINK = pgf90
+
+# Options de compilation, options a l'edition de liens
+
+NONEC    = -c
+DEBUGC   = -c -g -C  -Mbounds 
+OPTIMC   = -c -O2 -Minfo=inline,loop,opt -tp amd64 -fastsse -Minline -mcmodel=medium
+PROFLC   = -c -u -O
+DEBUGR8C = -c -u -xtypemap=real:64 -g 
+OPTIMR8C = -c -fast -stackvar -autopar -xtypemap=real:64
+PROFLR8C = -c -u -xtypemap=real:64 -O
+
+NONEL    = 
+DEBUGL   =  -g -C  -Mbounds 
+OPTIML   = -O2 -Minfo=inline,loop,opt -tp amd64 -fastsse -Minline -mcmodel=medium
+PROFLL   = -u -O
+DEBUGR8L = -g 
+OPTIMR8L = -fast -stackvar -autopar -xtypemap=real:64
+PROFLR8L = -u -xtypemap=real:64 -O
+
+# Option de redirection des objets
+
+OPTR     = -o "
+MPTR     = -module "

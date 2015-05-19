@@ -1,0 +1,27 @@
+# Nom du compilateur, nom de l'editeur de liens
+
+#CC   = pathf90
+#LINK = pathf90
+
+# Options de compilation, options a l'edition de liens
+
+NONEC    = -c
+DEBUGC   = -c -g2 -ffortran-bounds-check  -mcmodel=medium
+OPTIMC   = -c -Ofast -mcpu=opteron -mcmodel=medium
+PROFLC   = -c -u -O
+DEBUGR8C = -c -u -xtypemap=real:64 -g 
+OPTIMR8C = -c -fast -stackvar -autopar -xtypemap=real:64
+PROFLR8C = -c -u -xtypemap=real:64 -O
+
+NONEL    = 
+DEBUGL   =  -g2 -C -ffortran-bounds-check  -mcmodel=medium
+OPTIML   = -Ofast -mcpu=opteron -mcmodel=medium
+PROFLL   = -u -O
+DEBUGR8L = -g 
+OPTIMR8L = -fast -stackvar -autopar -xtypemap=real:64
+PROFLR8L = -u -xtypemap=real:64 -O
+
+# Option de redirection des objets
+
+OPTR     = -o "
+MPTR     = -module "

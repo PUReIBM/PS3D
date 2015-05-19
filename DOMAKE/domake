@@ -1,0 +1,337 @@
+#!/bin/sh
+#set -xv
+
+# Creation d'un makefile
+#
+# arg 1 : Location of f77_opt. This file specifies the optimization options. 
+# arg 2 : Name of Makefile
+# arg 3 : Name of the file containing the list of source files.
+# arg 4 : Optimization mode DEBUG/OPTIM.
+# arg 5 : Directory where the object files are to be placed.
+# arg 6 : Name of the executable.
+# arg 7 : Name of the compiler.
+# arg 8 : Should be "mpi" if generating a parallel Makefile. Else leave it blank.
+
+MAKETAB="	"
+BASEDIR=`pwd`
+echo
+echo ' ========================================================='
+echo " Creating the Makefile"
+echo ' ========================================================='
+echo
+if [ "$1" ]
+then
+   F77DIR=$1
+else
+   echo -e " Location of f77_opt ............. ? \c"
+   read F77DIR
+   echo
+fi
+if [ "$2" ]
+then
+   MAKENAME=$2
+else
+   echo -e " Name of MakeFile .................... ? \c"
+   read MAKENAME
+   echo
+fi
+if [ "$3" ]
+then
+   SRCFILE=$3
+else
+   echo -e " Name of the file containing list of *.F90 files ... ? \c"
+   read SRCFILE
+   echo
+fi
+if [ "$4" ]
+then
+   TYPE=$4
+else
+   echo -e " DEBUG or OPTIM ...... ? \c"
+   read TYPE
+   echo
+fi
+if [ "$5" ]
+then
+   OBJDIR=$5
+else
+   echo -e " Location of object files ..... ? \c"
+   read OBJDIR
+   echo
+fi
+if [ "$6" ]
+then
+   EXECNAME=$6
+else
+   echo -e " Name of the executable ................ ? \c"
+   read EXECNAME
+   echo
+fi
+
+if [ "$7" ]
+then
+   COMPNAME=$7
+else
+   echo -e " Compiler Name ................ ? \c"
+   read COMPNAME
+   echo
+fi
+
+#if [ "$8" ]
+#then
+#   FFTW3=$8
+#else
+#   FFTW3=0
+#   echo
+#fi
+
+if [ "$9" ]
+then
+   MPI="mpi"
+else
+   MPI=""
+   echo
+fi
+
+RNDIR=Rn
+
+dirnames=`cat ${SRCFILE}`
+rndirnames=`cat ${RNDIR}/src_rn`
+SRC=`dirname ${SRCFILE}`
+INCLUDES="include"
+echo " Location of f77_opt        : $F77DIR"
+echo " Name of Makefile              : $MAKENAME"
+echo " List of source files *.f      : $SRCFILE"
+echo " Type for compilation          : $TYPE"
+echo " Repository of object files    : $OBJDIR"
+echo " executable file name          : $EXECNAME"
+echo " Compiler to be used           : $COMPNAME"
+echo
+echo " make -f $MAKENAME"
+
+cp ${F77DIR}/f77_opt_$COMPNAME "${MAKENAME}"
+cat ${RNDIR}/rn_opt_${COMPNAME} >> ${MAKENAME}
+echo ' ========================================================='
+echo
+
+COMPNAMEU=`echo $COMPNAME | tr "[a-z]" "[A-Z]"`
+if [ "$MPI" ]
+then
+   COMPNAMEUSED=${COMPNAME}_${MPI}
+else
+   COMPNAMEUSED=$COMPNAME
+fi
+exec 1>> ${MAKENAME}
+
+case ${COMPNAME} in
+        pg|ifc)
+          CC=ifort
+	  LINK=ifort
+        ;;
+        path)
+          CC=mpif90
+	  LINK=mpif90
+        ;;
+esac
+
+if [ "$MPI" ]
+then
+          CC=mpif90
+          LINK=mpif90
+fi
+
+
+echo
+echo "CC = ${CC}"
+echo
+echo "LINK = ${LINK}"
+
+echo
+echo '# --------------------------------------------------------'
+echo '# Parametres for Makefile '
+echo '# --------------------------------------------------------'
+echo
+echo '# Repertoire des fichiers sources'
+echo
+echo "DSR = ."
+echo
+echo '# Repertoire des objets pour les fichiers sources'
+echo '# qui ne sont pas dans le repertoire courant'
+echo
+echo "DOBJ = ${OBJDIR}"
+echo
+echo '# Prefix pour les noms des objets'
+echo
+echo "PRE  = ${TYPE}_${COMPNAMEUSED}_"
+echo
+echo "# Type -- compilation "
+echo
+echo "OPTC    = \$(${TYPE}C)"
+echo "OPTL    = \$(${TYPE}L)"
+echo
+echo "# Name of executable file "
+echo
+echo "EXEC = ${COMPNAMEUSED}_${EXECNAME}"
+echo
+echo '# --------------------------------------------------------'
+echo
+echo 'DPO = $(DOBJ)/'
+echo
+echo "RNO = ${RNDIR}/"
+echo
+echo "INCLUDE= ${INCLUDES}"
+echo 
+if   [ "${MPI}" ]
+then
+   echo "FFTW_LIBS= -lfftw3_mpi -lfftw3"
+   echo "FFTW_LIBDIR= -L${HOME}/FFTW3/lib"
+
+   echo "ADD_LIBS= -lpfft"
+   echo "ADD_LIBDIR= -L${HOME}/PFFT/lib"
+else
+   echo "FFTW_LIBS= -lfftw3"
+   echo "FFTW_LIBDIR= -L${HOME}/FFTW3/lib"
+
+   echo "ADD_LIBS= \"\""
+   echo "ADD_LIBDIR= \"\""
+fi
+
+echo
+ if [ "${MPI}" ]
+ then
+	echo "MPI_LIBS= -lmpi"
+	echo "MPI_LIBDIR= -L/shared/openmpi/lib"
+	echo
+	echo "MACRO= -D\"PARALLEL=1\""
+ else
+	echo "MPI_LIBS= \"\""
+	echo "MPI_LIBDIR= \"\""
+	echo
+	echo "MACRO= -D\"PARALLEL=0\""
+ fi
+echo '# List the objet files'
+echo
+echo -e 'LOBJ = \c'
+echo -e "\\"
+
+for dirname in $dirnames
+do
+  bname=`basename $dirname .f ` 
+  aname=`basename $bname .F90 `
+  adir=`dirname $dirname`
+  if [ "${adir}" != "." ]
+  then
+     echo -e "\\"
+     echo -e "\$(DPO)${aname}.o\c"
+  else
+     echo -e "\\"
+     echo -e "\$(PRE)${aname}.o\c"
+  fi
+done
+echo
+echo
+echo -e 'RNOBJ = \c'
+echo -e "\\"
+
+for rndirname in $rndirnames
+do
+  bname=`basename $rndirname .f `
+  echo -e "\\"
+  echo -e "\$(DPO)${bname}.o\c"
+done
+echo
+echo
+echo "# Construction of Dependencies for the executable"
+echo
+echo "\$(EXEC) : \$(RNOBJ) \$(LOBJ)"
+echo
+echo "${MAKETAB}\$(LINK) \$(MACRO) \$(OPTL) -o \$(EXEC) \$(LOBJ) \$(RNOBJ) \$(MPI_LIBDIR) \$(FFTW_LIBDIR) \$(ADD_LIBDIR) \$(MPI_LIBS) \$(ADD_LIBS) \$(FFTW_LIBS) -lm"
+echo
+echo
+echo "tags: "
+echo "${MAKETAB}ctags SRC/FLO/*.F90 SRC/SCALAR/*.F90 SRC/SHARED_MODULES/*.F90 SRC/POST_PROCESS/*.F90 SRC/FLO/*.h "
+echo
+echo "# Dependances at compilation stage for source files"
+for dirname in $dirnames
+do
+  bname=`basename $dirname .f`
+  aname=`basename $bname .F90 `
+  adir=`dirname $dirname`
+  cname=`basename $dirname `
+  if [ "${adir}" != "." ]
+  then
+     echo -e "\$(DPO)${aname}.o: \\"
+     echo -e "\$(DSR)/${adir}/${cname} \c"
+     if test $aname = "global_data"
+	then
+	echo -e "\\"
+    	    echo -e "\$(DSR)/$adir/ibm.h \c"
+     fi	
+     for inc in `sed -n 's/^[        ]*[iI][nN][cC][lL][uU][dD][eE][         ]*\(['\''"]\)\([^'\''"]*\)\1.*/\2/p' ${dirname} | sort -u`
+     do
+        echo -e "\\"
+#        echo -e "\$(DSR)/$adir/$inc\c"
+	incfname=`basename $inc`
+         echo -e "${BASEDIR}/${INCLUDES}/$incfname\c"
+     done
+     modlist=""
+     for inc in `grep -i  "^ *use " ${dirname} | sed -e 's/,//g' | \
+    awk '{printf(" %s ",$2) }'`
+     do
+     	modappend=1
+	for modname in $modlist
+	do
+		if test $modname = $inc
+		then
+			modappend=0
+			break
+		fi
+	done
+	if test $modappend -eq 1
+	then modlist="$modlist $inc"
+	fi
+     done
+     for modname in $modlist
+     do	
+        echo -e "\\"
+	if test $COMPNAME = "path"
+	then modname=`echo $modname|tr "[a-z]" "[A-Z]"`
+	fi
+#        echo -e "\$(DSR)/$adir/$inc\c"
+	 echo -e "\$(DPO)$modname.mod\c"
+     done
+    echo
+     echo "${MAKETAB}\$(CC) \$(MACRO) \$(OPTC) \$(DSR)/$adir/$cname \$(OPTR)\$(DPO)$aname.o\" \$(MPTR)\$(DPO)\""
+     
+#    modulelist=`grep -i  "^ *use " ${dirname} | sed -e 's/,//g' | \
+#    awk '{printf(" %s ",$2) }'`
+
+
+#    echo -e \# file ${dirname} uses these modules: ${modulelist} 
+  else
+     echo -e "\$(PRE)$aname.o: \\"
+     echo -e "\$(DSR)/$aname.f\c"
+     for inc in `sed -n 's/^[        ]*[iI][nN][cC][lL][uU][dD][eE][         ]*\(['\''"]\)\([^'\''"]*\)\1.*/\2/p' ${dirname} | sort -u`
+     do
+        echo -e "\\"
+        echo -e "\$(DSR)/$adir/$inc \c"
+     done
+     echo
+     echo -e "${MAKETAB}\$(CC) \$(OPTC) \$(DSR)/$aname.f\c"
+     echo " \$(OPTR)\$(PRE)$aname.o\""
+  fi
+
+  echo
+done
+echo
+for rndirname in ${rndirnames}
+do
+     adir=`dirname $rndirname`
+     bname=`basename $rndirname .f `
+     cname=`basename $rndirname`
+     echo -e "\$(DPO)${bname}.o:\\"
+     echo -e "\$(RNO)${cname} \c"
+     echo
+     echo "${MAKETAB}\$(CC) \$(RNFLAGS) \$(RNO)$cname \$(OPTR)\$(DPO)$bname.o\""
+done
+echo

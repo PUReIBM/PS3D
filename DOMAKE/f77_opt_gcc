@@ -1,0 +1,27 @@
+# Nom du compilateur, nom de l'editeur de liens
+
+CC   = gcc
+LINK = gcc
+
+# Options de compilation, options a l'edition de liens
+
+NONEC    = -c
+DEBUGC   = -c -g -ffree-line-length-none
+OPTIMC   = -c -O3 -ffree-line-length-none
+PROFLC   = -c -u -O
+DEBUGR8C = -c -u -xtypemap=real:64 -g 
+OPTIMR8C = -c -fast -stackvar -autopar -xtypemap=real:64
+PROFLR8C = -c -u -xtypemap=real:64 -O
+
+NONEL    = 
+DEBUGL   = -g -ffree-line-length-none
+OPTIML   = -O -ffree-line-length-none
+PROFLL   = -u -O
+DEBUGR8L = -g 
+OPTIMR8L = -fast -stackvar -autopar -xtypemap=real:64
+PROFLR8L = -u -xtypemap=real:64 -O
+
+# Option de redirection des objets
+
+OPTR     = -o "
+MPTR     = -J "

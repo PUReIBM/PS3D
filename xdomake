@@ -1,0 +1,83 @@
+#!/bin/sh
+
+# Creation d'un makefile
+#
+# arg 1 Type d'options de compilation
+# arg 2 Nom du code
+#
+# Flags for make file               : LINK/DOMAKE
+# make file name                    : MAKE/${1}_make$2
+# list of source files              : SRC/src$2
+# type for compiling, opt or debug  : $1
+# Directory where the *.o files go  : LINK/OBJECT
+# Name of executable                : run$2
+# example  ./xdomake OPTIM flo_scal
+fftw3=0
+wdir=OBJ_$1_$4_$2
+    if test -d $wdir   
+    then		
+    echo -e "FOLDER $wdir ALREADY EXISTS, NOT MAKING NEW FOLDER \n"
+    else
+    
+    echo -e "FOLDER $wdir DOES NOT EXIST, MAKING NEW ONE \n"
+    mkdir $wdir
+    fi
+
+    if test -d "MAKE"   
+    then	
+    echo	
+    echo -e "FOLDER MAKE ALREADY EXISTS, NOT MAKING NEW FOLDER \n"
+    else
+    echo
+    echo -e "FOLDER MAKE DOES NOT EXIST, MAKING NEW ONE \n"
+    mkdir MAKE
+    fi
+
+#   echo -e "Do you wish to use FFTW3 libraries? (y/n)[no]"
+#   read fftver
+#   case $fftver in 
+#     y|Y )
+#      echo -e "Using FFTW3 libraries"
+#      fftw3=1
+#    ;;
+#    *)
+#      echo -e "Not using FFTW3 libraries"
+#      fftw3=0
+#    ;;
+#    esac
+  
+    DOMAKE/domake DOMAKE MAKE/${1}_$4_make$2 SRC/src_$2 $1 $wdir $3 $4 $fftw3
+
+echo -e "Do you want to generate Makefile for MPI run ? (y/n) [no]"
+read genmpi
+case $genmpi in
+   y|Y )
+     echo -e " Generating MPI Makefile using $4 compiler \n"
+     wdir=OBJ_$1_$4_mpi_$2
+     if test -d $wdir   
+     then		
+     echo -e "FOLDER $wdir ALREADY EXISTS, NOT MAKING NEW FOLDER \n"
+     else
+    
+     echo -e "FOLDER $wdir DOES NOT EXIST, MAKING NEW ONE \n"
+     mkdir $wdir
+     fi
+
+     if test -d "MAKE"   
+     then	
+     echo	
+     echo -e "FOLDER MAKE ALREADY EXISTS, NOT MAKING NEW FOLDER \n"
+     else
+     echo
+     echo -e "FOLDER MAKE DOES NOT EXIST, MAKING NEW ONE \n"
+     mkdir MAKE
+     fi
+     DOMAKE/domake DOMAKE MAKE/${1}_$4_mpi_make$2 SRC/src_$2 $1 $wdir $3 $4 $fftw3 mpi
+
+ ;;
+   *)
+    echo -e " Done with generating Makefiles \n"
+    cont=0
+ ;;
+ esac
+
