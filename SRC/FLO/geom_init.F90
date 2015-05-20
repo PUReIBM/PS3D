@@ -36,33 +36,33 @@ CONTAINS
 		! generate flow reversal pairs
 		!     goto 100
 
-		!ri=r-dr
-		!ro=r+dr
-		!ro2 = r+two*dr
-		!theta = zero
-		!phi = zero
-		!imax=NINT(twopi*r/four*f2)
-		!imax = 30
-		!dtheta=twopi/imax/four
-		!nbndloc = 0
-		!nrprloc = 0
-		!DO i=1,imax+1
-		!	jmax=NINT(twopi*r*SIN(theta)/4*f2)
-		!	!jmax = 30
-		!	dphi=twopi/jmax/4
-		!	!Print*,'dphi  = ', dphi, r*SIN(theta)*SIN(dphi)
-		!	phi = zero
-		!	DO j=1,jmax+1
-		!		rado = xo2**2. + yo2**2. + zo2**2.
-		!		r2=x*x+y*y+z*z
-		!
-		!		nbndloc=nbndloc+1
-		!		phi=phi+dphi
-		!		nrprloc=nrprloc+1
-		!	ENDDO
-		!	!read(*,*)
-		!	theta=theta+dtheta
-		!ENDDO
+		ri=r-dr
+		ro=r+dr
+		ro2 = r+two*dr
+		theta = zero
+		phi = zero
+		imax=NINT(twopi*r/four*f2)
+		!!imax = 30
+		dtheta=twopi/imax/four
+		nbndloc = 0
+		nrprloc = 0
+		DO i=1,imax+1
+			jmax=NINT(twopi*r*SIN(theta)/4*f2)
+			!jmax = 30
+			dphi=twopi/jmax/4
+			!Print*,'dphi  = ', dphi, r*SIN(theta)*SIN(dphi)
+			phi = zero
+			DO j=1,jmax+1
+				rado = xo2**2. + yo2**2. + zo2**2.
+				r2=x*x+y*y+z*z
+
+				nbndloc=nbndloc+1
+				phi=phi+dphi
+				nrprloc=nrprloc+1
+			ENDDO
+			!read(*,*)
+			theta=theta+dtheta
+		ENDDO
 		!!PRINT*,'nbndloc 1= ', nbndloc
 		ALLOCATE(nxb(nbndloc), nyb(nbndloc), nzb(nbndloc))
 		!ALLOCATE(nxi(nbndloc), nyi(nbndloc), nzi(nbndloc))
