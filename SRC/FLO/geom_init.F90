@@ -81,9 +81,6 @@ CONTAINS
 		nbndloc = 0
 		nrprloc = 0
 
-write (*,*) 1
-
-
 		DO i=1,imax+1
 			jmax=NINT(twopi*r*SIN(theta)/4*f2)
 			!jmax = 30
@@ -177,15 +174,9 @@ write (*,*) 1
 			theta=theta+dtheta
 		ENDDO
 
-write (*,*) 2
-
 		!PRINT*,'nbndloc 2= ', nbndloc
 		CALL generbnd(nbnd, nbndloc, nxb(1:nbndloc), nyb(1:nbndloc), nzb(1:nbndloc))
-write (*,*) 3
-
 		DEALLOCATE(nxb, nyb, nzb)
-
-write (*,*) 4
 
 	END SUBROUTINE quadgener
 
