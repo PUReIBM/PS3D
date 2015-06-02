@@ -1850,28 +1850,33 @@ stop
 					dy = doml(2)/real(my,prcn)
 					dx = dy
 					dz = dy 
-					write (*,"(1a,3d15.7)") 'FROM RESTART: DOML     = ', doml(1:3)
-					write (*,"(1a,3d15.7)") 'FROM RESTART: DX,DY,DZ = ', dx, dy, dz
-					write (*,"(1a,3i)")     'FROM RESTART: MX,MY,MZ = ', mx, my, mz
 					read (1050) MOVE_PARTICLES
+					read (1050) char_length
 				elseif (trim(input_type).eq."lubtest") then
 					nphases = 2
 					call alloc_phase_related
 				elseif (trim(input_type).eq."single-phase") then
 					nphases = 0
+
+					read (1050) doml(1:ndim)
+					read (1050) mx,my,mz
+					read (1050) dx,dy,dz
+					dy = doml(2)/real(my,prcn)
+					dx = dy
+					dz = dy
+					read (1050) char_length
 				else
 					nphases = 1
 					call alloc_phase_related
 				endif
-				read (1050) char_length
 				write (*,*) 'FROM RESTART: NBODY = ', nbody
-				write (ounit,*) 'FROM RESTART: NBODY = ', nbody
+				write (*,"(1a,3d15.7)") 'FROM RESTART: DOML     = ', doml(1:ndim)
+				write (*,"(1a,3d15.7)") 'FROM RESTART: DX,DY,DZ = ', dx, dy, dz
+				write (*,"(1a,3i)")     'FROM RESTART: MX,MY,MZ = ', mx, my, mz
 			endif
 
 			BROADCAST_INT(count_restart,1,node_zero,comm_cart_2d)
-
 			BROADCAST_INT(nbody,1,node_zero,comm_cart_2d)
-
 			BROADCAST_INT(nphases,1,node_zero,comm_cart_2d)
 
 			if (.not.I_AM_NODE_ZERO) then
@@ -1884,17 +1889,17 @@ stop
 					BROADCAST_DOUBLE(phase_array(iphs)%dia,1,node_zero,comm_cart_2d)
 				enddo
 			endif
-			BROADCAST_DOUBLE(doml,3,node_zero,comm_cart_2d)
-			BROADCAST_INT(mx,1,node_zero,comm_cart_2d)
-			BROADCAST_INT(my,1,node_zero,comm_cart_2d)
-			BROADCAST_INT(mz,1,node_zero,comm_cart_2d)
-			BROADCAST_DOUBLE(dx,1,node_zero,comm_cart_2d)
-			BROADCAST_DOUBLE(dy,1,node_zero,comm_cart_2d)
-			BROADCAST_DOUBLE(dz,1,node_zero,comm_cart_2d)
-			BROADCAST_LOGICAL(MOVE_PARTICLES,1,node_zero,comm_cart_2d)
-			BROADCAST_DOUBLE(char_length,1,node_zero,comm_cart_2d)
+			BROADCAST_DOUBLE(doml, ndim, node_zero, comm_cart_2d)
+			BROADCAST_INT(mx, 1, node_zero, comm_cart_2d)
+			BROADCAST_INT(my, 1, node_zero, comm_cart_2d)
+			BROADCAST_INT(mz, 1, node_zero, comm_cart_2d)
+			BROADCAST_DOUBLE(dx, 1, node_zero, comm_cart_2d)
+			BROADCAST_DOUBLE(dy, 1, node_zero, comm_cart_2d)
+			BROADCAST_DOUBLE(dz, 1, node_zero, comm_cart_2d)
+			BROADCAST_LOGICAL(MOVE_PARTICLES, 1, node_zero, comm_cart_2d)
+			BROADCAST_DOUBLE(char_length, 1, node_zero, comm_cart_2d)
 
-			if (nbody.NE.0) then
+			if (nbody>0) then
 				call alloc_bnd_related
 				if (I_AM_NODE_ZERO) then
 					read (1050) xc(1:nbody,1:3)
@@ -1908,7 +1913,7 @@ stop
 				endif
 			endif
 
-			if (nbody.NE.0) then
+			if (nbody>0) then
 				do idim = 1, ndim
 					BROADCAST_DOUBLE(xc(1,idim),nbody,node_zero,comm_cart_2d)
 					BROADCAST_DOUBLE(velbdy(1,idim),nbody,node_zero,comm_cart_2d)
@@ -1920,10 +1925,10 @@ stop
 			endif
 
 			if (input_type.eq."random".or.trim(input_type).eq.'risers') then
-				!do iphs = 1, nphases
-				!	BROADCAST_INT(phase_array(iphs)%npart,1,node_zero,comm_cart_2d)
-				!	BROADCAST_DOUBLE(phase_array(iphs)%dia,1,node_zero,comm_cart_2d)
-				!enddo
+				do iphs = 1, nphases
+					BROADCAST_INT(phase_array(iphs)%npart, 1, node_zero, comm_cart_2d)
+					BROADCAST_DOUBLE(phase_array(iphs)%dia, 1, node_zero, comm_cart_2d)
+				enddo
 			elseif (input_type.eq."simple") then
 				xperiodic = .true.
 				phase_array(1)%npart = nbody
@@ -2020,6 +2025,7 @@ stop
 				endif
 			elseif (trim(input_type).eq.'single-phase') then
 				doml(1:ndim) = two*pi
+				char_length = doml(2)
 				call screen_separator(80,'T')
 				write (*,*) 'IN SINGLE PHASE TURBULENCE RUN --> RESTART'
 				if (my.eq.undefined_I) then

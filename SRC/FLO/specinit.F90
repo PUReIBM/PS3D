@@ -126,6 +126,8 @@ contains
 		!IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 		!IIIII CALCULATING PARAMETERS OF VELOCITY FLUCTUATIONS IIIIIII
 
+		call allocation
+
 		kmin = twopi*1./dble(doml(1))
 		k0 = kmin*(1.1) !sqrt(kx(2)**2+ky(2)**2+kz(2)**2)
 
@@ -146,11 +148,15 @@ contains
 		epsf  = tke**1.5 / l_e
 #endif
 
-		if (mx_iso>0) then
+		if (.not.(trim(input_type)=='single-phase') .and. mx_iso>0) then
 			eta = 2.1 /kmax * dble(mx)/dble(mx_iso)
 		!if (trim(input_type)=='single-phase') then
 		else
-			eta = 2.1/kmax
+			if (.not.(trim(input_type)=='single-phase')) then
+				if (I_AM_NODE_ZERO) write (*,*) "WARNING: MAKE SURE ETA IS SELECTED CORRECTLY"
+			endif
+			eta = pi/kmax
+!eta = dx
 		endif
 		re_l  = re_lambda**2 * 3./20.
 		l_e = eta * ( re_l**0.75 )
@@ -226,7 +232,7 @@ contains
 		real(prcn) :: phi_s
 		real(prcn) :: u_min,u_max
 
-	character*100 filename
+		character*100 filename
 
 #if PARALLEL
 		integer, allocatable :: samplearray(:), which_procs(:)
@@ -238,8 +244,6 @@ contains
 
 		!--------------------------------------
 		if (I_AM_NODE_ZERO) write (*,*) "GENERATING TURBULENT VELOCITY FLUCTUATIONS"
-
-		call allocation
 
 		call calc_initial_turb
 

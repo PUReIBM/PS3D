@@ -200,11 +200,17 @@ CONTAINS
 				do iphs = 1, nphases
 					write(runit) phase_array(iphs)%dia
 				end do
-				write(runit) DOML(1:ndim)
-				write(runit) mx,my,mz
-				write(runit) dx,dy,dz
-				write(runit) move_particles
-				write(runit) char_length
+			endif
+
+			write(runit) DOML(1:ndim)
+			write(runit) mx,my,mz
+			write(runit) dx,dy,dz
+
+			if (nbody>0) write(runit) move_particles
+
+			write(runit) char_length
+
+			if (nbody>0) then
 				write(runit) xc(1:nbody, 1:3)
 				write(runit) radbdy(1:nbody)
 				write(runit) velbdy(1:nbody, 1:3)
@@ -225,14 +231,20 @@ CONTAINS
 					do iphs = 1, nphases
 						write(runit) phase_array(iphs)%dia
 					end do
-					write(runit) DOML(1:ndim)
-					write(runit) mx,my,mz
-					write(runit) dx,dy,dz
-					write(runit) move_particles
-					write(runit) char_length
-					write(runit) xc(1:nbody, 1:3)
+				endif
+
+				write(runit) DOML(1:ndim)
+				write(runit) mx,my,mz
+				write(runit) dx,dy,dz
+
+				if (nbody>0) write(runit) move_particles
+
+				write(runit) char_length
+
+				if (nbody>0) then
+					write(runit) xc(1:nbody, 1:ndim)
 					write(runit) radbdy(1:nbody)
-					write(runit) velbdy(1:nbody, 1:3)
+					write(runit) velbdy(1:nbody, 1:ndim)
 					write(runit) frame_vel(1:ndim)
 					write(runit) frame_pos(1:ndim)
 				endif
