@@ -344,6 +344,71 @@ Contains
 	end subroutine calc_pressure
 
 
+	subroutine compute_omega
+		USE bcsetarrays, ONLY :  omega => fr
+		use field_tmp_arrays
+		implicit none
+		integer i, j, k, dim1, dim2, dim3
+		complex(prcn) :: wtmp
+		real(prcn) :: epsilon
+
+		do dim1=1, ndim
+			uftmp(:,:,:) = czero
+			do dim2=1, ndim
+				if (dim2==dim1) goto 10
+				do dim3=1, ndim
+					if (dim3==dim1.or.dim3==dim2) goto 20
+#if !PARALLEL
+					do k=1, local_no(3)
+						do j=1, local_no(2)
+							do i=1, local_no(1)
+								if (dim2==1) then
+									wtmp = wx(i)
+								elseif (dim2==2) then
+									wtmp = wy(j)
+								elseif (dim2==3) then
+									wtmp = wz(k)
+								endif
+#else
+					do k=1, local_no(2)
+						do j=1, local_no(1)
+							do i=1, local_no(3)
+								if (dim2==1) then
+									wtmp = wy(j)
+								elseif (dim2==2) then
+									wtmp = wz(k)
+								elseif (dim2==3) then
+									wtmp = wx(i)
+								endif
+#endif
+								if (dim1==1 .and. dim2==2 .and. dim3==3) then
+									epsilon = one
+								elseif (dim1==3 .and. dim2==1 .and. dim3==2) then
+									epsilon = one
+								elseif (dim1==2 .and. dim2==3 .and. dim3==1) then
+									epsilon = one
+								elseif (dim1==dim2 .or. dim1==dim3 .or. dim2==dim3) then
+									epsilon = zero
+								else
+									epsilon = -one
+								endif
+
+								uftmp(i,j,k) = uftmp(i,j,k) + epsilon * u(i,j,k,dim3) * wtmp
+							enddo
+						enddo
+					enddo
+20					continue
+				enddo
+10				continue
+			enddo
+			! 3d c_to_r fftw uftmp -> omega(:,:,:,dim1)
+			call fftwc2r(uftmp, omega(1:local_ni(1),1:local_ni(2),1:local_ni(3),dim1))
+			call communicate_in_gohst_domain(omega(:,:,:,dim1))
+		enddo
+	end subroutine compute_omega
+
+
+
 !  subroutine calc_realvort
 !    use nlarrays , Only : uf1
 !    implicit none 
@@ -658,7 +723,7 @@ Contains
 		call interpolator(gstencil(1:onew,1:onew,1:onew,1:ndim),ppgrsten(1:onew,1:onew,1:onew,1:ndim)&
 			&,pos(1:ndim), ppl(1:ndim), onew, interp_scheme,weightp)
 		pl = array_dot_product(prsten(1:onew,1:onew,1:onew), weightp(1:onew,1:onew,1:onew)) 
-  end subroutine interpolate_pdata
+	end subroutine interpolate_pdata
 
 
 	subroutine grid_nodes_insphere
@@ -936,7 +1001,7 @@ Contains
 
 
 		enddo
-  end subroutine update_nrpr_array
+	end subroutine update_nrpr_array
 
 	subroutine check_external_pt(xloin, xlin, m, l)
 		use dem_mod
@@ -1324,7 +1389,7 @@ endif
 		!if (I_AM_NODE_ZERO) write (*,*) 'pmean = ', SUM(pbcp(:,:,:))/real(global_n(1)*global_n(2)*global_n(3),prcn)
 	end subroutine interpolate_fields_to_new_mesh
 
-  subroutine RUN_TIME_FILE_OPENER(funit, filename, formfile)
+	subroutine RUN_TIME_FILE_OPENER(funit, filename, formfile)
 		use general_funcs 
 
 		Implicit NOne
@@ -1352,7 +1417,7 @@ endif
 				endif
 			endif
 		endif
-  end subroutine RUN_TIME_FILE_OPENER
+	end subroutine RUN_TIME_FILE_OPENER
 
   subroutine RESTART_FILE_OPENER(funit, filename, formfile)
     use general_funcs 

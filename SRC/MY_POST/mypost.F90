@@ -2972,7 +2972,7 @@ contains
 						enddo
 						out_arr(i,j,k,ndim+2) = tmp / 2
 
-						out_arr(i,j,k,ndim+3) = out_arr(i,j,k,ndim+1) + mp(1) * (i-global_n(1)/2) /global_n(1)* doml(1)
+						out_arr(i,j,k,ndim+3) = out_arr(i,j,k,ndim+1) + mpg(1) * (i-dble(global_n(1))/2) /global_n(1)* doml(1)
 					enddo
 				enddo
 			enddo
@@ -3617,9 +3617,8 @@ contains
 
 
 	subroutine pressure_velocity_vs_theta
-		use dependent_functions , only : interpolate_pdata, interpolate_udata
-		use bcsetarrays, only :  omega => fr
-		use boundary_condition, only : compute_omega
+		use dependent_functions , only : interpolate_pdata, interpolate_udata, compute_omega
+		use bcsetarrays, only : omega !=> fr
 		implicit none
 
 		integer :: l, m, n, iphs, vcellb(ndim), pcellb(ndim), index_out(ndim), ib, ie, jb, je, kb, ke, onew, ii, jj, kk, i, j, k

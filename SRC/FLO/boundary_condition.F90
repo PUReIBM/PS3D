@@ -406,7 +406,7 @@ CONTAINS
 
 	subroutine bcset(rks)!(ur,pr,nlr,onlr)
 		use general_funcs, only : instant_file_opener
-use mypost_process
+!use mypost_process
 		implicit none 
 
 		integer, Intent(in) ::  rks
@@ -1433,67 +1433,7 @@ endif
 	end subroutine calc_pres_visc_drag
 
 
-	subroutine compute_omega
-		USE bcsetarrays, ONLY :  omega => fr
-		implicit none
-		integer i, j, k, dim1, dim2, dim3
-		complex(prcn) :: wtmp
-		real(prcn) :: epsilon
 
-		do dim1=1, ndim
-			uftmp(:,:,:) = czero
-			do dim2=1, ndim
-				if (dim2==dim1) goto 10
-				do dim3=1, ndim
-					if (dim3==dim1.or.dim3==dim2) goto 20
-#if !PARALLEL
-					do k=1, local_no(3)
-						do j=1, local_no(2)
-							do i=1, local_no(1)
-								if (dim2==1) then
-									wtmp = wx(i)
-								elseif (dim2==2) then
-									wtmp = wy(j)
-								elseif (dim2==3) then
-									wtmp = wz(k)
-								endif
-#else
-					do k=1, local_no(2)
-						do j=1, local_no(1)
-							do i=1, local_no(3)
-								if (dim2==1) then
-									wtmp = wy(j)
-								elseif (dim2==2) then
-									wtmp = wz(k)
-								elseif (dim2==3) then
-									wtmp = wx(i)
-								endif
-#endif
-								if (dim1==1 .and. dim2==2 .and. dim3==3) then
-									epsilon = one
-								elseif (dim1==3 .and. dim2==1 .and. dim3==2) then
-									epsilon = one
-								elseif (dim1==2 .and. dim2==3 .and. dim3==1) then
-									epsilon = one
-								elseif (dim1==dim2 .or. dim1==dim3 .or. dim2==dim3) then
-									epsilon = zero
-								else
-									epsilon = -one
-								endif
-
-								uftmp(i,j,k) = uftmp(i,j,k) + epsilon * u(i,j,k,dim3) * wtmp
-							enddo
-						enddo
-					enddo
-20					continue
-				enddo
-10				continue
-			enddo
-			! 3d c_to_r fftw uftmp -> omega(:,:,:,dim1)
-			call fftwc2r(uftmp, omega(1:local_ni(1),1:local_ni(2),1:local_ni(3),dim1))
-			call communicate_in_gohst_domain(omega(:,:,:,dim1))
-		enddo
-	end subroutine compute_omega
 
 	subroutine calc_visc
 		implicit none
