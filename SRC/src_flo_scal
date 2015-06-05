@@ -21,8 +21,8 @@ SRC/FLO/dem_mod.F90
 SRC/FLO/soft_sphere_coll.F90
 SRC/FLO/collision_mod.F90
 SRC/FLO/maternmod.F90
-SRC/MY_POST/mypost.F90
 SRC/FLO/dependent_functions.F90
+SRC/MY_POST/mypost.F90
 SRC/FLO/geom_init.F90
 SRC/FLO/initialize_flo.F90
 SRC/FLO/report.F90
