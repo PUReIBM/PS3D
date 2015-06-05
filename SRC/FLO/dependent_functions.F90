@@ -1042,7 +1042,6 @@ endif
 
 
 	subroutine compute_new_timestep(rks)
-		use mypost_process, only : reynolds_stress_tensor, compute_sijsij
 		use init_turb, only : calc_velreal
 		use nlmainarrays, Only : ubcp, pbcp
 		use dem_mod, only : is_mobile
@@ -1224,10 +1223,6 @@ endif
 			endif
 		endif
 		mesh_vel = mesh_veltemp
-		if (iglobstep==1 .or. mod(iglobstep,skip_num)==0) then
-			call reynolds_stress_tensor
-			call compute_sijsij
-		endif
 
 		if (I_AM_NODE_ZERO) then
 			call CPU_TIME (CPU1) 

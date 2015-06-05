@@ -136,7 +136,6 @@ PROGRAM dtibm_main
 contains 
 
 	subroutine main
-
 		use init_turb, only : forced_turbulence, statistics
 		implicit none  
 
@@ -361,6 +360,11 @@ contains
 				else
 					if (I_AM_NODE_ZERO) write (*,'(A)') 'COMPUTING THE NEW TIME STEP'
 					call compute_new_timestep(intstep)
+
+					if (iglobstep==1 .or. mod(iglobstep,skip_num)==0) then
+						call reynolds_stress_tensor
+						call compute_sijsij
+					endif
 
 					if ((mean_vel_to_particles).and.(imove.ne.1).and.(.not.movingcv)) then
 						delta_meshpos(1:ndim) = mesh_vel(1:ndim)*dt/dx

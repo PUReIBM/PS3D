@@ -1043,7 +1043,7 @@ contains
 
 
 	subroutine read_tke(unitnum,count,io)
-		  use init_turb, only : u_prime
+		use init_turb, only : u_prime
 		implicit none
 		integer, intent(in) :: unitnum
 		integer, intent(inout) :: count, io
@@ -1080,7 +1080,6 @@ contains
 			endif
 		endif
 	end subroutine read_tke
-
 
 
 	subroutine kp_source_dissipation
@@ -2973,7 +2972,7 @@ contains
 						enddo
 						out_arr(i,j,k,ndim+2) = tmp / 2
 
-						out_arr(i,j,k,ndim+3) = out_arr(i,j,k,ndim+1) + mpg(1) *i/global_n(1)* doml(1)
+						out_arr(i,j,k,ndim+3) = out_arr(i,j,k,ndim+1) + mp(1) * (i-global_n(1)/2) /global_n(1)* doml(1)
 					enddo
 				enddo
 			enddo
@@ -3079,8 +3078,8 @@ contains
 
 		rmax  = doml(2) / 2
 
-		allocate(uiui(0:nbins,ndim), uiui_par(0:nbins), uiui_per(0:nbins))
-		allocate(num_bins(0:nbins))
+		allocate(uiui(nbins,ndim), uiui_par(nbins), uiui_per(nbins))
+		allocate(num_bins(nbins))
 
 		uiui     = zero
 		uiui_par = zero
@@ -3090,9 +3089,9 @@ contains
 
 
 		if (imove==1.or.move_particles) then
-			allocate(uiui_ss(0:nbins,ndim), uiui_ss_par(0:nbins), uiui_ss_per(0:nbins))
-			allocate(uiui_fs(0:nbins,ndim), uiui_fs_par(0:nbins), uiui_fs_per(0:nbins))
-			allocate(uiui_sf(0:nbins,ndim), uiui_sf_par(0:nbins), uiui_sf_per(0:nbins))
+			allocate(uiui_ss(nbins,ndim), uiui_ss_par(nbins), uiui_ss_per(nbins))
+			allocate(uiui_fs(nbins,ndim), uiui_fs_par(nbins), uiui_fs_per(nbins))
+			allocate(uiui_sf(nbins,ndim), uiui_sf_par(nbins), uiui_sf_per(nbins))
 
 			uiui_ss     = zero
 			uiui_ss_par = zero
@@ -3111,7 +3110,7 @@ contains
 		endif
 
 		if (allocated(rad_bin)) deallocate(rad_bin)
-		allocate(rad_bin(0:nbins))
+		allocate(rad_bin(nbins))
 		rad_bin = zero
 
 		dr = rmax / nbins
@@ -3119,8 +3118,8 @@ contains
 		id_r = myid
 		id_s = myid
 
-		do ibin=0, nbins
-			rad_bin(ibin) = ibin * dr
+		do ibin=1, nbins
+			rad_bin(ibin) = (ibin-0.5) * dr
 		enddo
 
 #if PARALLEL
@@ -3314,7 +3313,7 @@ contains
 			if (r<=rmax) then
 				ibin = int(r/rmax * nbins) +1
 				if (ibin>nbins) ibin = nbins
-				if (i1==i2.and.j1==j2.and.k1==k2) ibin = 0
+				!if (i1==i2.and.j1==j2.and.k1==k2) ibin = 0
 
 				if (fluid1) then
 					vec1(:) = u1(:)-ufmean(:)
@@ -3328,7 +3327,8 @@ contains
 					vec2(:) = velbdy(body2,:) - usmean(:)
 				endif
 
-				if (ibin/=0) then
+				!if (ibin/=0) then
+				if (i1/=i2.or.j1/=j2.or.k1/=k2) then
 					unit(:) = rij(:) / r
 					vec1_par(:) = dot_product(vec1(:),unit(:)) * unit(:)
 					vec1_per(:) = vec1(:) - vec1_par(:) 
@@ -3377,35 +3377,35 @@ contains
 		subroutine output
 			implicit none
 			character*50 filename
-			real(prcn), dimension(0:nbins,ndim) :: u1out, u1out_ss, u1out_fs, u1out_sf
-			real(prcn), dimension(0:nbins) :: u2out, u3out, u2out_ss, u3out_ss, u2out_fs, u3out_fs, u2out_sf, u3out_sf
-			integer(8), dimension(0:nbins) :: num_binsout, num_binsout_fs, num_binsout_sf, num_binsout_ss
+			real(prcn), dimension(nbins,ndim) :: u1out, u1out_ss, u1out_fs, u1out_sf
+			real(prcn), dimension(nbins) :: u2out, u3out, u2out_ss, u3out_ss, u2out_fs, u3out_fs, u2out_sf, u3out_sf
+			integer(8), dimension(nbins) :: num_binsout, num_binsout_fs, num_binsout_sf, num_binsout_ss
 			integer :: i, j
 
-			GLOBAL_DOUBLE_SUM(uiui, u1out, (nbins+1)*ndim, comm_cart_2d)
-			GLOBAL_DOUBLE_SUM(uiui_par, u2out, nbins+1, comm_cart_2d)
-			GLOBAL_DOUBLE_SUM(uiui_per, u3out, nbins+1, comm_cart_2d)
-			GLOBAL_LONGINT_SUM(num_bins, num_binsout, nbins+1, comm_cart_2d)
+			GLOBAL_DOUBLE_SUM(uiui, u1out, (nbins)*ndim, comm_cart_2d)
+			GLOBAL_DOUBLE_SUM(uiui_par, u2out, nbins, comm_cart_2d)
+			GLOBAL_DOUBLE_SUM(uiui_per, u3out, nbins, comm_cart_2d)
+			GLOBAL_LONGINT_SUM(num_bins, num_binsout, nbins, comm_cart_2d)
 
 			if (imove==1.or.move_particles) then
-				GLOBAL_DOUBLE_SUM(uiui_ss, u1out_ss, (nbins+1)*ndim, comm_cart_2d)
-				GLOBAL_DOUBLE_SUM(uiui_ss_par, u2out_ss, nbins+1, comm_cart_2d)
-				GLOBAL_DOUBLE_SUM(uiui_ss_per, u3out_ss, nbins+1, comm_cart_2d)
-				GLOBAL_LONGINT_SUM(num_bins_ss, num_binsout_ss, nbins+1, comm_cart_2d)
+				GLOBAL_DOUBLE_SUM(uiui_ss, u1out_ss, (nbins)*ndim, comm_cart_2d)
+				GLOBAL_DOUBLE_SUM(uiui_ss_par, u2out_ss, nbins, comm_cart_2d)
+				GLOBAL_DOUBLE_SUM(uiui_ss_per, u3out_ss, nbins, comm_cart_2d)
+				GLOBAL_LONGINT_SUM(num_bins_ss, num_binsout_ss, nbins, comm_cart_2d)
 
-				GLOBAL_DOUBLE_SUM(uiui_fs, u1out_fs, (nbins+1)*ndim, comm_cart_2d)
-				GLOBAL_DOUBLE_SUM(uiui_fs_par, u2out_fs, nbins+1, comm_cart_2d)
-				GLOBAL_DOUBLE_SUM(uiui_fs_per, u3out_fs, nbins+1, comm_cart_2d)
-				GLOBAL_LONGINT_SUM(num_bins_fs, num_binsout_fs, nbins+1, comm_cart_2d)
+				GLOBAL_DOUBLE_SUM(uiui_fs, u1out_fs, (nbins)*ndim, comm_cart_2d)
+				GLOBAL_DOUBLE_SUM(uiui_fs_par, u2out_fs, nbins, comm_cart_2d)
+				GLOBAL_DOUBLE_SUM(uiui_fs_per, u3out_fs, nbins, comm_cart_2d)
+				GLOBAL_LONGINT_SUM(num_bins_fs, num_binsout_fs, nbins, comm_cart_2d)
 
-				GLOBAL_DOUBLE_SUM(uiui_sf, u1out_sf, (nbins+1)*ndim, comm_cart_2d)
-				GLOBAL_DOUBLE_SUM(uiui_sf_par, u2out_sf, nbins+1, comm_cart_2d)
-				GLOBAL_DOUBLE_SUM(uiui_sf_per, u3out_sf, nbins+1, comm_cart_2d)
-				GLOBAL_LONGINT_SUM(num_bins_sf, num_binsout_sf, nbins+1, comm_cart_2d)
+				GLOBAL_DOUBLE_SUM(uiui_sf, u1out_sf, (nbins)*ndim, comm_cart_2d)
+				GLOBAL_DOUBLE_SUM(uiui_sf_par, u2out_sf, nbins, comm_cart_2d)
+				GLOBAL_DOUBLE_SUM(uiui_sf_per, u3out_sf, nbins, comm_cart_2d)
+				GLOBAL_LONGINT_SUM(num_bins_sf, num_binsout_sf, nbins, comm_cart_2d)
 			endif
 
 			if (I_AM_NODE_ZERO) then
-				do ibin=0, nbins
+				do ibin=1, nbins
 					if (num_binsout(ibin)>0) then
 						u1out(ibin,:) = u1out(ibin,:) / num_binsout(ibin)
 						u2out(ibin) = u2out(ibin) / num_binsout(ibin)
@@ -3433,31 +3433,31 @@ contains
 					endif
 				enddo
 
-				do ibin=nbins ,0, -1
+				do ibin=nbins ,1, -1
 					do idim=1, ndim
-						if (u1out(0,idim)>small_number) u1out(ibin,idim) = u1out(ibin,idim) / u1out(0,idim)
+						if (u1out(1,idim)>small_number) u1out(ibin,idim) = u1out(ibin,idim) / u1out(1,idim)
 					enddo
-					if (u2out(0)>small_number) u2out(ibin) = u2out(ibin) / u2out(0)
-					if (u3out(0)>small_number) u3out(ibin) = u3out(ibin) / u3out(0)
+					if (u2out(1)>small_number) u2out(ibin) = u2out(ibin) / u2out(1)
+					if (u3out(1)>small_number) u3out(ibin) = u3out(ibin) / u3out(1)
 
 					if (imove==1.or.move_particles) then
 						do idim=1, ndim
-							if (u1out_ss(0,idim)>small_number) u1out_ss(ibin,idim) = u1out_ss(ibin,idim) / u1out_ss(0,idim)
+							if (u1out_ss(1,idim)>small_number) u1out_ss(ibin,idim) = u1out_ss(ibin,idim) / u1out_ss(1,idim)
 						enddo
-						if (u2out_ss(0)>small_number) u2out_ss(ibin) = u2out_ss(ibin) / u2out_ss(0)
-						if (u3out_ss(0)>small_number) u3out_ss(ibin) = u3out_ss(ibin) / u3out_ss(0)
+						if (u2out_ss(1)>small_number) u2out_ss(ibin) = u2out_ss(ibin) / u2out_ss(1)
+						if (u3out_ss(1)>small_number) u3out_ss(ibin) = u3out_ss(ibin) / u3out_ss(1)
 
 						do idim=1, ndim
-							if (u1out_fs(0,idim)>small_number) u1out_fs(ibin,idim) = u1out_fs(ibin,idim) / u1out_fs(0,idim)
+							if (u1out_fs(1,idim)>small_number) u1out_fs(ibin,idim) = u1out_fs(ibin,idim) / u1out_fs(1,idim)
 						enddo
-						if (u2out_fs(0)>small_number) u2out_fs(ibin) = u2out_fs(ibin) / u2out_fs(0)
-						if (u3out_fs(0)>small_number) u3out_fs(ibin) = u3out_fs(ibin) / u3out_fs(0)
+						if (u2out_fs(1)>small_number) u2out_fs(ibin) = u2out_fs(ibin) / u2out_fs(1)
+						if (u3out_fs(1)>small_number) u3out_fs(ibin) = u3out_fs(ibin) / u3out_fs(1)
 
 						do idim=1, ndim
-							if (u1out_sf(0,idim)>small_number) u1out_sf(ibin,idim) = u1out_sf(ibin,idim) / u1out_sf(0,idim)
+							if (u1out_sf(1,idim)>small_number) u1out_sf(ibin,idim) = u1out_sf(ibin,idim) / u1out_sf(1,idim)
 						enddo
-						if (u2out_sf(0)>small_number) u2out_sf(ibin) = u2out_sf(ibin) / u2out_sf(0)
-						if (u3out_sf(0)>small_number) u3out_sf(ibin) = u3out_sf(ibin) / u3out_sf(0)
+						if (u2out_sf(1)>small_number) u2out_sf(ibin) = u2out_sf(ibin) / u2out_sf(1)
+						if (u3out_sf(1)>small_number) u3out_sf(ibin) = u3out_sf(ibin) / u3out_sf(1)
 					endif
 				enddo
 
@@ -3471,7 +3471,7 @@ contains
 !				endif
 				write (1,*) "zone"
 
-				do ibin=0, nbins
+				do ibin=1, nbins
 					if (imove==1.or.move_particles) then
 						write (1,'(1f10.4,20d15.7)') rad_bin(ibin), u1out(ibin,:), u2out(ibin), u3out(ibin), &
 														&                   u1out_ss(ibin,:), u2out_ss(ibin), u3out_ss(ibin), &
@@ -3617,21 +3617,24 @@ contains
 
 
 	subroutine pressure_velocity_vs_theta
-		use dependent_functions, only : interpolate_pdata, interpolate_udata
+		use dependent_functions , only : interpolate_pdata, interpolate_udata
+		use bcsetarrays, only :  omega => fr
+		use boundary_condition, only : compute_omega
 		implicit none
 
-		integer :: l, m, n, iphs, vcellb(ndim), pcellb(ndim), index_out(ndim), ib, ie, jb, je, kb, ke, onew
+		integer :: l, m, n, iphs, vcellb(ndim), pcellb(ndim), index_out(ndim), ib, ie, jb, je, kb, ke, onew, ii, jj, kk, i, j, k
 		real(prcn) :: da, rad, xl(ndim), position_out(ndim), rad2, ul(ndim), ppll(ndim), pl, nll(ndim), onll(ndim), dfll(ndim)
 		logical :: i_have_the_point
 
 		real(prcn), allocatable :: theta_bin(:)
-		real(prcn), allocatable :: ptheta_local(:), utheta_local(:,:)
+		real(prcn), allocatable :: ptheta_local(:), utheta_local(:,:), prestheta_local(:,:), visctheta_local(:,:)
 		integer(8), allocatable :: theta_count_local(:)
 
-		real(prcn), allocatable :: ptheta(:), utheta(:,:)
+		real(prcn), allocatable :: ptheta(:), utheta(:,:), prestheta(:,:), visctheta(:,:)
 		integer(8), allocatable :: theta_count(:)
 
 		real(prcn) :: dtheta, thetamin, thetamax, xtemp, ytemp, ztemp, phi, theta
+		real(prcn) :: df(nbnd,ndim), vort(ndim)
 		integer :: itheta, unitnum
 		character*100 filename
 
@@ -3646,27 +3649,39 @@ contains
 		dtheta = (thetamax-thetamin)/nbins
 
 		allocate(theta_bin(nbins))
-		allocate(ptheta_local(nbins), utheta_local(nbins,ndim))
 		allocate(theta_count_local(nbins))
-
-		allocate(ptheta(nbins), utheta(nbins,ndim))
 		allocate(theta_count(nbins))
+
+		allocate(ptheta_local(nbins), utheta_local(nbins,ndim))
+		allocate(ptheta(nbins), utheta(nbins,ndim))
+
+		allocate(prestheta_local(nbins,ndim), visctheta_local(nbins,ndim))
+		allocate(prestheta(nbins,ndim), visctheta(nbins,ndim))
 
 		theta_bin = zero
 		ptheta_local = zero
 		utheta_local = zero
+		prestheta_local = zero
+		visctheta_local = zero
 		theta_count_local = 0
 
 		ptheta = zero
 		utheta = zero
+		prestheta = zero
+		visctheta = zero
 		theta_count = 0
+
+		call compute_omega
 
 		do itheta=1, nbins
 			theta_bin(itheta) = (itheta-0.5) * dtheta
 		enddo
 
+
 		do m=1, nbody
 			if (myid_particles(m)) then
+
+				da=4.*pi*(radbdy(m)*dx)**2./real(nbnd,prcn)
      
 				iphs = 1
 				nbnd = phase_array(iphs)%nbnd
@@ -3675,20 +3690,17 @@ contains
 
 
 				do l=1, nbnd
-write (*,*) 
-write (*,*) l, nbnd
-
 					if (.not.part_array(m)%if_drag(L)) goto 100
 					rad = zero
 					do n=1, ndim
 						xl(n)=xc(m,n)+ bndarray(n,l)*radbdy(m)
 
-						rad=rad+bndarray(n,l)**2.0
-
 						ul(n)=zero
 						ppll(n)=zero
 				 	enddo
-					rad = DSQRT(rad)
+
+					rad  = DSQRT(dot_product(bndarray(1:ndim,l),bndarray(1:ndim,l)))
+					rad2 = DSQRT(dot_product(bndarray(2:ndim,l),bndarray(2:ndim,l)))-small_number
 
 					do n=1, ndim
 						vcellb(n) = floor(xl(n))
@@ -3705,22 +3717,44 @@ write (*,*) l, nbnd
 
 						pl=zero
 						call interpolate_pdata(pcellb, xl, ppll, pl, l)
+
+						pl = pl + (xl(1) - dble(global_n(1))/2)/global_n(1) * doml(1) * mpg(1)
+
+
 						call interpolate_udata(vcellb, xl, ib, ie, jb, je, kb, ke, ul, nll, onll, dfll, 0, m, l, onew) 
 
+						vort(:) = zero 
+						do k = 1, onew 
+							do j = 1, onew
+								do i = 1, onew
+									ii = ib+i-1
+									jj = jb+j-1
+									kk = kb+k-1
+									do n=1, ndim
+										vort(n)=vort(n)+ weightp(i,j,k)*omega(ii,jj,kk,n)
+									enddo
+								enddo
+							enddo
+						enddo
 
-write (*,"(1a, 3d15.7)") "xl ", bndarray(:,l)
-write (*,"(1a, 3i)") "pcelv ", pcellb
-write (*,"(1a, 3i)") "vcelv ", vcellb
+						df(l,1)=vort(3)*cd(2,l)
+						df(l,1)=df(l,1)-vort(2)*cd(3,l)
 
-write (*,"(1a, 3d15.7)") "pl ", pl
-write (*,"(1a, 3d15.7)") "ul ", ul
+						df(l,2)=vort(1)*cd(3,l)
+						df(l,2)=df(l,2)-vort(3)*cd(1,l)
 
+						df(l,3)=vort(2)*cd(1,l)
+						df(l,3)=df(l,3)-vort(1)*cd(2,l)
+
+						df(l,1)=-df(l,1)
+						df(l,2)=-df(l,2)
+						df(l,3)=-df(l,3)
 
 						xtemp = -bndarray(1,l)
 						theta = acos(abs(xtemp)/rad)
 						if (xtemp<zero) theta = pi - theta
 
-						rad2 = rad*sin(theta)
+						!rad2 = rad*sin(theta)
 						if (rad2>small_number) then
 							ytemp = bndarray(2,l)
 							ztemp = bndarray(3,l)
@@ -3738,14 +3772,8 @@ write (*,"(1a, 3d15.7)") "ul ", ul
 							phi = 0
 						endif
 
-write (*,"(1a, 3d15.7)") "angle ", theta*180/pi, phi*180/pi , dtheta*180/pi
-
-
-
 						itheta = floor(theta / dtheta) + 1
 						if (itheta > nbins) itheta = nbins
-
-write (*,"(1a, 3i)") "itheta ", itheta
 
 						theta_count_local(itheta) = theta_count_local(itheta) + 1
 						ptheta_local(itheta) = ptheta_local(itheta) + pl
@@ -3753,9 +3781,15 @@ write (*,"(1a, 3i)") "itheta ", itheta
 						call vec_cart_to_sphr(ul,theta,phi)
 						utheta_local(itheta, :) = utheta_local(itheta, :) + ul(:)
 
-write (*,"(1a, 3d15.7)") "us ", ul
-!read (*,*)
 
+						!---------------------------------------------------------------
+						!     calculate the viscous and pressure components separately
+						!---------------------------------------------------------------
+						do n=1, ndim
+							prestheta_local(itheta,n) = prestheta_local(itheta,n) - pl * cd(n,l) * da
+
+							visctheta_local(itheta,n) = visctheta_local(itheta,n) + df(l,n) * vis * da
+						enddo
 					endif
 100				continue
 				enddo
@@ -3764,6 +3798,10 @@ write (*,"(1a, 3d15.7)") "us ", ul
 
 		GLOBAL_DOUBLE_SUM(ptheta_local, ptheta, nbins, comm_cart_2d)
 		GLOBAL_DOUBLE_SUM(utheta_local, utheta, nbins*ndim, comm_cart_2d)
+
+		GLOBAL_DOUBLE_SUM(prestheta_local, prestheta, nbins*ndim, comm_cart_2d)
+		GLOBAL_DOUBLE_SUM(visctheta_local, visctheta, nbins*ndim, comm_cart_2d)
+
 		GLOBAL_LONGINT_SUM(theta_count_local, theta_count, nbins, comm_cart_2d)
 
 		do itheta=1, nbins
@@ -3773,14 +3811,19 @@ write (*,"(1a, 3d15.7)") "us ", ul
 			endif
 		enddo
 
+		ptheta(:) = ptheta(:) / (vis*umeanslip/dia_phys)
+		utheta(:, :) = utheta(:, :) / umeanslip
+
+		prestheta(:,:) = prestheta(:,:) / (.5 * rhof * umeanslip**2 * pi * dia_phys**2/4)  ! (3*pi*dia_phys*vis*(1-maxvolfrac)*umeanslip)
+		visctheta(:,:) = visctheta(:,:) / (.5 * rhof * umeanslip**2 * pi * dia_phys**2/4) !(3*pi*dia_phys*vis*(1-maxvolfrac)*umeanslip)
+
 		if (I_AM_NODE_ZERO) then
 			filename = trim(run_name)//"_p_u_theta"
 			unitnum = 1
 			call instant_file_opener(filename,unitnum,.true.)
 
 			do itheta=1, nbins			
-!				write (unitnum, "(5d15.7)") theta_bin(itheta), ptheta(itheta)!, utheta(itheta,:)
-				write (unitnum, *) theta_bin(itheta), ptheta(itheta), theta_count(itheta)
+				if (theta_count(itheta)>0) write (unitnum, "(1d15.7,1i,10d15.7)") theta_bin(itheta), int(theta_count(itheta)), ptheta(itheta), utheta(itheta,:), prestheta(itheta,:), visctheta(itheta,:)
 			enddo
 			close(unitnum)
 			write (*,*) "PU_vs_THERA IS DONE..."
@@ -3809,8 +3852,8 @@ write (*,"(1a, 3d15.7)") "us ", ul
 		rotate(3,2) = cos(th) * sin(phi)
 
 		rotate(1,3) = 0d0
-		rotate(2,3) =-sin(phi)
-		rotate(3,3) = cos(phi)
+		rotate(2,3) =-sin(th) * sin(phi)
+		rotate(3,3) = sin(th) * cos(phi)
 
 		tmp = 0d0
 		do dim1=1, ndim
@@ -3841,8 +3884,8 @@ write (*,"(1a, 3d15.7)") "us ", ul
 		rotate(3,2) = cos(th) * sin(phi)
 
 		rotate(1,3) = 0d0
-		rotate(2,3) =-sin(phi)
-		rotate(3,3) = cos(phi)
+		rotate(2,3) =-sin(th) * sin(phi)
+		rotate(3,3) = sin(th) * cos(phi)
 
 		tmp = 0d0
 		do dim1=1, ndim

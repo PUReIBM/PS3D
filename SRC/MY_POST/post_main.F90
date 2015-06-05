@@ -382,7 +382,7 @@ contains
 		!call velocity_output
 		call write_drag
 		call flow_snapshot
-		!call pressure_velocity_vs_theta
+		call pressure_velocity_vs_theta
 		!call kp_source_dissipation
 		!call fluid_acceleration_pdf
 		!call compute_energy_spectrum_function
