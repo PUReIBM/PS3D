@@ -3,7 +3,7 @@
 !    fixed and freely evolving fluid-particle suspensions. PUReRIBM-PS3D
 !    is a continuum Navier-Stokes solver based on Cartesian grid that utilizes
 !    Immeresed Boundary method to represent particle surfuces.
-!    Copyright (C) 2015, Shankar Subramaniam
+!    Copyright (C) 2015, Shankar Subramaniam, Rahul Garg, Sudheer Tenneti, Bo Sun, Mohammad Mehrabadi
 !
 !    This program is free software: you can redistribute it and/or modify
 !    it under the terms of the GNU General Public License as published by
@@ -19,16 +19,16 @@
 !    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !
 !    For acknowledgement, please refer to the following publications:
-!    (1) TENNETI, S., GARG, R., HRENYA, C.M., FOX, R.O. & SUBRAMANIAM, S. 2010,
-!        Direct numerical simulation of gas–solid suspensions at moderate
-!        Reynolds number: quantifying the coupling between hydrodynamic forces
-!        and particle velocity fluctuations. Powder Technol. 203 (1),57–69.
-!    (2) SUBRAMANIAM, S., MEHRABADI, M., HORWITZ, J. & MANI, A. 2014, Developing
+!    (1) TENNETI, S. & SUBRAMANIAM, S., 2014, Particle-resolved direct numerical
+!        simulation for gas–solid flow model development. Annu. Rev. Fluid Mech.
+!        46 (1), 199–230.
+!    (2) SUBRAMANIAM, S., MEHRABADI, M., HORWITZ, J. & MANI, A., 2014, Developing
 !        improved Lagrangian point particle models of gas–solid flow from
 !        particle-resolved direct numerical simulation. In Studying Turbulence
 !        Using Numerical Simulation Databases-XV, Proceedings of the CTR 2014
 !        Summer Program, pp. 5–14. Center for Turbulence Research, Stanford
 !        University, CA.
+
 
 PROGRAM dtibm_main
   !-----------------------------------------------------------------------
@@ -36,7 +36,6 @@ PROGRAM dtibm_main
   !	Fourier pseudospectral in the x-direction
   !	Fourier pseudospectral in the y-direction
   !	Fourier pseudospectral in the z-direction
-  ! AUTHOR: RAHUL GARG, SUDHEET TENNETI, MOHAMMAD MEHRABADI
   !	mx	number of gridpoints in the x-direction
   !	my	number of gridpoints in the y-direction
   !	mz	number of gridpoints in the z-direction
